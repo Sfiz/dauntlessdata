@@ -12,13 +12,12 @@
 #include<stdlib.h>
 #include<algorithm>
 
-
+std::string inputPrompt = ">>";
 //error handling
 void error(std::string s)
 {
 	throw std::runtime_error(s);
 }
-
 //used to flush input stream, reset state and remove any characters in buffer
 void flushStream()
 {
@@ -26,71 +25,103 @@ void flushStream()
 	std::cin.ignore(10000, '\n');
 }
 
-class Drop {
-public:
-	std::string name;
-	std::string desc;
 
-	Drop(std::string n, std::string d) : name(n), desc(d) { };			//default construct
+//***************************************************************************************************************************************************************************************************************
+
+
+class Drop {
+	std::string name;
+	std::string howtoget;
+	std::string rarity;
+
+	Drop(std::string& n, std::string& how, std::string& r) : name(n), howtoget(how), rarity(r) { };
 };
+
 
 class Behemoth {
-public:
-	//DATA MEMBERS
+private:
 	std::string name;
-	std::string element;
-	int threatLevel;
-	int threatLevel_h = -1;		//_h is for heroic, only certain behemoths have heroic version, this will be set to -1 if it is not a thing
-	int recPower;
-	int recPower_h = -1;		//read above ^^^
+	std::string type;
+	void assignElements() {
+		if (type == "Blaze")
+			weak = "Frost";
+		else if (type == "Frost")
+			weak = "Blaze";
+		else if (type == "Shock")
+			weak = "Terra";
+		else if (type == "Terra")
+			weak = "Shock";
+		else if (type == "Neutral")
+			weak = "None";
+		else if (type == "Umbral")
+			weak = "Radiant";
+		else if (type == "Radiant")
+			weak = "Umbral";
+	}
+	std::string strength;
+	std::string weak;
+	int recpower;
+	std::vector<Drop> drops;
 
-	//FUNCTIONS
-	void printInfo();								//defined below class 
-
-	//CONSTRUCTORS
-	Behemoth(std::string n, std::string ele, int threat, int power) : name(n), element(ele), threatLevel(threat), recPower(power) { }; //default constructor
-	
-	Behemoth(std::string n, std::string ele, int threat, int power, int threat_h, int power_h) {									  //additional constructor for heroic
+public:
+	Behemoth(std::string& n, std::string& t, int& power) {				//default constructor
 		name = n;
-		element = ele; 
-		threatLevel = threat; 
-		recPower = power;
-		threatLevel_h = threat_h;
-		recPower_h = power_h;
-	};
+		type = t;
+		if (t == "Neutral") strength = "None";
+		else strength = t;
+		recpower = power;
+		assignElements();
+	}
+	std::string getname() { return name; }
+	std::string gettype() { return type; }
+	std::string getstrength() { return strength; }
+	std::string getweak() { return weak; }
+	int getpower() { return recpower; }
 };
-
-void Behemoth::printInfo()
-{
-	//heroic check
-	bool heroicVersion = false;
-	if (threatLevel_h != -1) heroicVersion = true;
-
-	//information of behemoth
-	std::cout << std::endl;
-	std::cout << "***INFORMATION***" << std::endl;
-	std::cout << "Name: " << name << std::endl;
-	std::cout << "Element: " << element << std::endl;
-	std::cout << "Threat Level: " << threatLevel;
-	if (heroicVersion) std::cout << " / " << threatLevel_h << " (Heroic)" << std::endl;
-	else std::cout << std::endl;
-	std::cout << "Recommended Power: " << recPower;
-	if (heroicVersion) std::cout << " / " << recPower_h << " (Heroic)" << std::endl;
-	else std::cout << std::endl;
-}
 
 class Database {
+private:
+	std::vector<Behemoth> list;			//list filled with all behemoths
 public:
-	std::vector<Behemoth> behemoths;
-	std::vector<Drop> drops;
+	void add(std::string name, std::string type, int rpower);
+	void addDrop(std::string name, std::string how, std::string rarity);
+	void getInfo(std::string& name);
 };
 
-Database database;
+void Database::add(std::string name, std::string type, int rpower)
+{
+	list.emplace_back(name, type, rpower);
+}
 
-//if new content is added for drops just add in function below
+void Database::addDrop(std::string name, std::string how, std::string rarity)
+{
+
+}
+
+void Database::getInfo(std::string& n)
+{
+	bool found = false;
+	for (Behemoth x : list) {
+		if (x.getname().find(n) != std::string::npos) {
+			std::cout << "\nName: " << x.getname() << "\nStrength: " << x.getstrength() << "\nWeakness: " << x.getweak() << "\nRecommended Power: " << x.getpower() << std::endl;
+			found = true;
+		}
+	}
+	//Behemoth name not found
+	if(!found)
+		std::cout << "No Behemoth with the name '" << n << "' was found." << std::endl;
+}
+
+//****************************************************************************************************************************************************************************************
+
+Database behemoths;
+
+
+
+/*					needs to be modified and fixed
 void loadDrops()
 {
-	database.drops.emplace_back("Adamantine Scale", "A Rare drop from slaying a Rockfall Skarn.");
+	drops.emplace_back("Adamantine Scale", "A Rare drop from slaying a Rockfall Skarn.");
 	database.drops.emplace_back("Aether Thorn", "A Common drop from slaying any Koshai.");
 	database.drops.emplace_back("Aetheric Claw", "A rare drop from the limbs of an Aether Charged Behemoth(Threat Level 8 + ).");
 	database.drops.emplace_back("Aetheric Crownplate", "A rare drop from the head of an Aether Charged Behemoth(Threat Level 8 + ).");
@@ -237,103 +268,103 @@ void loadDrops()
 	database.drops.emplace_back("Terra Orb", "Obtained from Terra Patrols and from terra Behemoths.");
 }
 
-//when new content is released add one line corresponding to behe in function listed below
+*/
+
 void loadBehes()
 {
 	//Charrogg
-	database.behemoths.emplace_back("Charrogg", "Blaze", 4, 150);
+	behemoths.add("Charrogg", "Blaze", 150);
 	//Firebrand Charrogg
-	database.behemoths.emplace_back("Firebrand Charrogg", "Blaze", 8, 300, 13, 425);
+	behemoths.add("Firebrand Charrogg", "Blaze", 300);
+	behemoths.add("Firebrand Charrogg (Heroic)", "Blaze", 425);
 
 	//Embermane
-	database.behemoths.emplace_back("Embermane", "Blaze", 5, 200);
+	behemoths.add("Embermane", "Blaze", 200);
 	//Bloodfire Embermane
-	database.behemoths.emplace_back("Bloodfire Embermane", "Blaze", 10, 350, 15, 475);
+	behemoths.add("Bloodfire Embermane", "Blaze", 350);
+	behemoths.add("Bloodfire Embermane (Heroic)", "Blaze", 475);
 
 	//Hellion
-	database.behemoths.emplace_back("Hellion", "Blaze", 7, 275);
+	behemoths.add("Hellion", "Blaze", 275);
 	//Scorchstone Hellion
-	database.behemoths.emplace_back("Scorchstone Hellion", "Blaze", 12, 400, 16, 500);
+	behemoths.add("Scorchstone Hellion", "Blaze", 400);
+	behemoths.add("Scorchstone Hellion (Heroic)", "Blaze", 500);
 
 	//Boreus
-	database.behemoths.emplace_back("Boreus", "Frost", 6, 250);
+	behemoths.add("Boreus", "Frost", 250);
 	//Dreadfrost Boreus
-	database.behemoths.emplace_back("Dreadfrost Boreus", "Frost", 9, 325, 15, 475);
+	behemoths.add("Dreadfrost Boreus", "Frost", 325);
+	behemoths.add("Dreadfrost Boreus (Heroic)", "Frost", 475);
 
 	//Pangar
-	database.behemoths.emplace_back("Pangar", "Frost", 7, 275);
+	behemoths.add("Pangar", "Frost", 275);
 	//Frostback Pangar
-	database.behemoths.emplace_back("Frostback Pangar", "Frost", 11, 375, 15, 475);
+	behemoths.add("Frostback Pangar", "Frost", 375);
+	behemoths.add("Frostback Pangar (Heroic)", "Frost", 475);
 
 	//Skraev
-	database.behemoths.emplace_back("Skraev", "Frost", 4, 150);
+	behemoths.add("Skraev", "Frost", 150);
 
 	//Drask
-	database.behemoths.emplace_back("Drask", "Shock", 7, 275);
+	behemoths.add("Drask", "Shock", 275);
 
 	//Nayzaga
-	database.behemoths.emplace_back("Nayzaga", "Shock", 5, 200);
+	behemoths.add("Nayzaga", "Shock", 200);
 	//Shockjaw Nayzaga
-	database.behemoths.emplace_back("Shockjaw Nayzaga", "Shock", 11, 375, 15, 475);
+	behemoths.add("Shockjaw Nayzaga", "Shock", 375);
+	behemoths.add("Shockjaw Nayzaga (Heroic)", "Shock", 475);
 
 	//Stormclaw
-	database.behemoths.emplace_back("Stormclaw", "Shock", 6, 250);
+	behemoths.add("Stormclaw", "Shock", 250);
 
 	//Kharabak
-	database.behemoths.emplace_back("Kharabak", "Terra", 6, 250);
+	behemoths.add("Kharabak", "Terra", 250);
 	//Razorwing Kharabak
-	database.behemoths.emplace_back("Razorwing Kharabak", "Terra", 10, 350, 14, 450);
+	behemoths.add("Razorwing Kharabak", "Terra", 350);
+	behemoths.add("Razorwing Kharabak (Heroic)", "Terra", 450);
 
 	//Koshai
-	database.behemoths.emplace_back("Koshai", "Terra", 10, 350, 17, 550);
+	behemoths.add("Koshai", "Terra", 350);
+	behemoths.add("Koshai (Heroic)", "Terra", 550);
 
 	//Skarn
-	database.behemoths.emplace_back("Skarn", "Terra", 3, 100);
+	behemoths.add("Skarn", "Terra", 100);
 	//Rockfall Skarn
-	database.behemoths.emplace_back("Rockfall Skarn", "Terra", 8, 300, 13, 425);
+	behemoths.add("Rockfall Skarn", "Terra", 300);
+	behemoths.add("Rockfall Skarn (Heroic)", "Terra", 425);
 
 	//Gnasher
-	database.behemoths.emplace_back("Gnasher", "Neutral", 3, 100);
+	behemoths.add("Gnasher", "Neutral", 100);
 	//Ragetail Gnasher
-	database.behemoths.emplace_back("Ragetail Gnasher", "Neutral", 9, 325, 13, 425);
+	behemoths.add("Ragetail Gnasher", "Neutral", 325);
+	behemoths.add("Ragetail Gnasher (Heroic)", "Neutral", 425);
 
 	//Quillshot
-	database.behemoths.emplace_back("Quillshot", "Neutral", 5, 200);
+	behemoths.add("Quillshot", "Neutral", 200);
 	//Deadeye Quillshot
-	database.behemoths.emplace_back("Deadeye Quillshot", "Neutral", 12, 400, 14, 450);
+	behemoths.add("Deadeye Quillshot", "Neutral", 400);
+	behemoths.add("Deadeye Quillshot (Heroic)", "Neutral", 450);
 
 	//Shrike
-	database.behemoths.emplace_back("Shrike", "Neutral", 4, 150);
+	behemoths.add("Shrike", "Neutral", 150);
 	//Moonreaver Shrike
-	database.behemoths.emplace_back("Moonreaver Shrike", "Neutral", 9, 325, 14, 450);
+	behemoths.add("Moonreaver Shrike", "Neutral", 325);
+	behemoths.add("Moonreaver Shrike (Heroic)", "Neutral", 450);
 
 	//Valomyr
-	database.behemoths.emplace_back("Valomyr", "Radiant", 8, 300, 16, 500);
+	behemoths.add("Valomyr", "Radiant", 300);
+	behemoths.add("Valomyr (Heroic)", "Radiant", 500);
 
 	//Rezakiri
-	database.behemoths.emplace_back("Rezakiri", "Radiant", 17, 550);
+	behemoths.add("Rezakiri", "Radiant", 550);
 
 	//Riftstalker 
-	database.behemoths.emplace_back("Riftstalker", "Umbral", 9, 325, 16, 500);
+	behemoths.add("Riftstalker", "Umbral", 325);
+	behemoths.add("Riftstalker (Heroic)", "Umbral", 500);
 
 	//Shrowd
-	database.behemoths.emplace_back("Shrowd", "Umbral", 17, 550);
+	behemoths.add("Shrowd", "Umbral", 550);
 }
-
-void searchBehe(std::string& s)			//s represents name of behemoth
-{
-	for (int i = 0; i < int(database.behemoths.size()); ++i) {
-		if (s == database.behemoths[i].name) {
-			database.behemoths[i].printInfo();			//behemoth found, print all information and return
-			return;
-		}
-	}
-	//name not found
-	std::cout << "Could not find behemoth with the name '" << s << "'." << std::endl;
-}
-
-//used to prompt user for input, just for sake of clarity it was named inputPrompt (used in main)
-std::string inputPrompt = ">>";
 
 void printMenu()
 {
@@ -348,7 +379,7 @@ int main()
 	//load data for all behemoths
 	std::cout << "Loading data... Please wait..." << std::endl;
 	loadBehes();
-	loadDrops();
+	//loadDrops();			needs to be implemented
 	system("cls");
 
 	printMenu();
@@ -368,12 +399,16 @@ int main()
 				std::cout << "What is the name of the Behemoth?" << std::endl << inputPrompt;
 				flushStream();
 				getline(std::cin, inputName);
-				searchBehe(inputName);
+				behemoths.getInfo(inputName);
 				break;
 			}
 			case 2: {			//Search for a drop		NEEDS TO BE IMPLEMENTED?
-				
-				break;
+				/*std::string inputName;
+				std::cout << "What is the name of the Drop?" << std::endl << inputPrompt;
+				flushStream();
+				getline(std::cin, inputName);
+				searchDrop(inputName);
+				break;*/
 			}
 			case 3: {			//Clear screen
 				system("cls");
@@ -390,6 +425,7 @@ int main()
 		}
 		catch (std::runtime_error& e) {
 			std::cerr << "Error: " << e.what() << std::endl;
+			flushStream();
 		}	
 
 		std::cout << std::endl;		//just for spacing
